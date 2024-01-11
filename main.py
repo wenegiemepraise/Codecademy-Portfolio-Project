@@ -1,5 +1,5 @@
 import time
-import random
+import threading
 #Who wants to be a millionaire
 print("Welcome to who wants to become a millionaire featuring your host 'Praise Wenegieme' ")
 #First get challanger information
@@ -58,8 +58,8 @@ class Game():
                 print("\nPlease choose a valid quiz!")
 
     def start_game(self):
-        t = 15
-        print("\nThe contest will start in 15 seconds!")    
+        t = 10
+        print("\nThe contest will start in 10 seconds!")    
         while t: 
             mins, secs = divmod(t, 60) 
             timer = f'{mins:02d}:{secs:02d}'
@@ -69,18 +69,19 @@ class Game():
         
         return 'Lets the games begin!!'
 
-    def timer_for_questions(self, Contestant):
-        time_remaining = Contestant.amount_of_time
-    
-        while time_remaining > 0:
+    def timer_for_questions(self, Contestant, question_time, event):
+        time_remaining = question_time
+
+        while time_remaining > 0 and not event.is_set():
             minutes, seconds = divmod(time_remaining, 60)
-            timer_for_q = f"{minutes:02d}:{seconds:02d}"
+            timer_for_q = f"\n {minutes:02d}:{seconds:02d}"
             print(timer_for_q, end="\r")
             time.sleep(1)
             time_remaining -= 1
 
-        print("Times up!")
-        return "Times up"
+        if not event.is_set():
+            print("Times up!")
+            event.set()
             
 
     def general_knowledge_quiz(self, Contestant):
@@ -92,29 +93,40 @@ class Game():
         self.start_game()
 
     def computer_science_quiz(self, Contestant):
-        print(f"\nOoo it looks like we have a tech genius in the amoung. Lets test {Contestant.name} knowledge on computer science!")
+        print(f"\nOoo it looks like we have a tech genius in our midst. Lets test {Contestant.name} knowledge on computer science!")
         self.start_game()
 
         print("Phase 1: Programming Languages")
         asked_computer_science_questions = []
-        computer_science_questions = {"What is the most common programming language used in competitive programming?": "C++",
-                                      "Name a COMPILED language.": ["C", "C++", "C#", "Java", "Rust", "Go", "Golang", "Fortran", "Swift"],
-                                      "What does the acorynm SQL stand for?": "Standard Query Language",
-                                      "Which programming language was developed by Apple for building iOS and macOS applications?": "Swift",
-                                      "Name a DYNAMICALLY typed language.": ["Lua", "Python", "JavaScript", "PHP", "Ruby", "Perl", "R", "Groovy", "Shell scripting languages"]}
+        computer_science_questions = {"What is the most common programming language used in competitive programming?": "c++",
+                                      "Name a COMPILED language.": ["c", "c++", "c#", "java", "rust", "go", "golang", "fortran", "swift"],
+                                      "What does the acorynm SQL stand for?": "standard query language",
+                                      "Which programming language was developed by Apple for building iOS and macOS applications?": "swift",
+                                      "Name a DYNAMICALLY typed language.": ["lua", "python", "javascript", "php", "ruby", "perl", "r", "groovy", "shell scripting languages"]}
         
         for q, a in computer_science_questions.items():
             if q not in asked_computer_science_questions:
-                self.timer_for_questions(Contestant)
-                print(q)
+
+                timer_event = threading.Event()
+
+                timer_thread = threading.Thread(target=self.timer_for_questions, args=(Contestant, Contestant.amount_of_time, timer_event))
+                timer_thread.start()
+                
+                
+                print(f"\n" + q)
                 computer_science_answer = input("What is the answer: ")
-                if computer_science_answer.lower() == a.lower() or computer_science_answer.lower() in a.lower():
+
+                timer_event.set()
+                timer_thread.join()
+
+                if computer_science_answer.lower() == a or computer_science_answer.lower() in a:
                     print("You are correct")
                     Contestant.score += 1
                 else:
                     print("Incorrect!")
 
             asked_computer_science_questions.append(q)
+            time.sleep(1)
         
         
 
