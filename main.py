@@ -74,10 +74,12 @@ class Game():
 
         while time_remaining > 0 and not event.is_set():
             minutes, seconds = divmod(time_remaining, 60)
-            timer_for_q = f"\n {minutes:02d}:{seconds:02d}"
+            timer_for_q = f"{minutes:02d}:{seconds:02d}"
             print(timer_for_q, end="\r")
             time.sleep(1)
             time_remaining -= 1
+
+        print()
 
         if not event.is_set():
             print("Times up!")
@@ -113,7 +115,9 @@ class Game():
                 timer_thread.start()
                 
                 
-                print(f"\n" + q)
+                print(f"\r", end="")
+                print(q)
+
                 computer_science_answer = input("What is the answer: ")
 
                 timer_event.set()
@@ -124,9 +128,9 @@ class Game():
                     Contestant.score += 1
                 else:
                     print("Incorrect!")
+                        
 
             asked_computer_science_questions.append(q)
-            time.sleep(1)
         
         
 
